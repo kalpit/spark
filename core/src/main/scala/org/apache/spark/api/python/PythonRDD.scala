@@ -45,6 +45,15 @@ private[spark] class PythonRDD[T: ClassTag](
     accumulator: Accumulator[JList[Array[Byte]]])
   extends RDD[Array[Byte]](parent) {
 
+  // getters
+  def getCommand = command
+  def getEnvVars = envVars
+  def getPythonIncludes = pythonIncludes
+  def getPreservePartitioning = preservePartitoning
+  def getPythonExec = pythonExec
+  def getBroadcastVars = broadcastVars
+  def getAccumulator = accumulator
+
   val bufferSize = conf.getInt("spark.buffer.size", 65536)
 
   override def getPartitions = parent.partitions
