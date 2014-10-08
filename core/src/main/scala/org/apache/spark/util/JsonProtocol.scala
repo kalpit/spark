@@ -237,6 +237,10 @@ private[spark] object JsonProtocol {
           ("Status" -> blockStatusToJson(status))
         })
       }.getOrElse(JNothing)
+    val customMetrics =
+      taskMetrics.customMetrics.map { case (name, value) =>
+        customMetricToJson(name, value)
+      }
     ("Host Name" -> taskMetrics.hostname) ~
     ("Executor Deserialize Time" -> taskMetrics.executorDeserializeTime) ~
     ("Executor Run Time" -> taskMetrics.executorRunTime) ~
@@ -248,7 +252,12 @@ private[spark] object JsonProtocol {
     ("Shuffle Read Metrics" -> shuffleReadMetrics) ~
     ("Shuffle Write Metrics" -> shuffleWriteMetrics) ~
     ("Input Metrics" -> inputMetrics) ~
-    ("Updated Blocks" -> updatedBlocks)
+    ("Updated Blocks" -> updatedBlocks) ~
+    ("Custom Metrics" -> customMetrics)
+  }
+
+  def customMetricToJson(metricName: String, metricValue: List[Long]): JValue = {
+    metricName -> metricValue
   }
 
   def shuffleReadMetricsToJson(shuffleReadMetrics: ShuffleReadMetrics): JValue = {
@@ -580,6 +589,13 @@ private[spark] object JsonProtocol {
           (id, status)
         }
       }
+
+    // set customMetrics
+    for (
+      obj <- (json \ "Custom Metrics").extract[List[JValue]];
+      (metricName, JArray(v)) <- obj.asInstanceOf[JObject].obj;
+      metricValue <- v.map(_.extract[Long])
+    ) metrics.setCustomMetric(metricName, metricValue)
     metrics
   }
 
