@@ -41,7 +41,29 @@ add_files = (os.environ.get("ADD_FILES").split(',')
 if os.environ.get("SPARK_EXECUTOR_URI"):
     SparkContext.setSystemProperty("spark.executor.uri", os.environ["SPARK_EXECUTOR_URI"])
 
-sc = SparkContext(appName="PySparkShell", pyFiles=add_files)
+# We need a better way to figure out if we are within a notebook session.
+# This is only a temporary solution that works for IPython 2.X and above.
+def getNotebookName():
+  try:
+    import json
+    import os
+    import urllib2
+    import IPython
+    from IPython.lib import kernel
+    connection_file_path = kernel.get_connection_file()
+    connection_file = os.path.basename(connection_file_path)
+    kernel_id = connection_file.split('-', 1)[1].split('.')[0]
+    sessions = json.load(urllib2.urlopen('http://127.0.0.1:8888/api/sessions'))
+    for sess in sessions:
+        if sess['kernel']['id'] == kernel_id:
+            notebook_name = sess['notebook']['name']
+            break
+  except Exception as ex:
+    notebook_name = "PySparkShell"
+
+  return notebook_name
+
+sc = SparkContext(appName=getNotebookName(), pyFiles=add_files)
 
 print("""Welcome to
       ____              __
