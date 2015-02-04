@@ -171,7 +171,7 @@ private[ui] class StagePage(parent: StagesTab) extends WebUIPage("stage") {
         {if (hasShuffleWrite) Seq(("Write Time", ""), ("Shuffle Write", "")) else Nil} ++
         {if (hasBytesSpilled) Seq(("Shuffle Spill (Memory)", ""), ("Shuffle Spill (Disk)", ""))
           else Nil} ++
-        Seq(("Errors", ""))
+        Seq(("Custom Metrics", ""),("Errors", ""))
 
       val unzipped = taskHeadersAndCssClasses.unzip
 
@@ -361,6 +361,7 @@ private[ui] class StagePage(parent: StagesTab) extends WebUIPage("stage") {
       val taskDeserializationTime = metrics.map(_.executorDeserializeTime).getOrElse(0L)
       val serializationTime = metrics.map(_.resultSerializationTime).getOrElse(0L)
       val gettingResultTime = info.gettingResultTime
+      val customMetrics = metrics.map(_.customMetrics).getOrElse(scala.collection.mutable.HashMap())
 
       val maybeAccumulators = info.accumulables
       val accumulatorsReadable = maybeAccumulators.map{acc => s"${acc.name}: ${acc.update.get}"}
@@ -469,6 +470,11 @@ private[ui] class StagePage(parent: StagesTab) extends WebUIPage("stage") {
             {diskBytesSpilledReadable}
           </td>
         }}
+        <td>
+          {customMetrics.foldLeft("")( (previous, pair) => {
+          (if (previous.isEmpty) "" else previous + "\n") + pair._1 + " = " + pair._2.mkString(",")
+        })}
+        </td>
         {errorMessageCell(errorMessage)}
       </tr>
     }
