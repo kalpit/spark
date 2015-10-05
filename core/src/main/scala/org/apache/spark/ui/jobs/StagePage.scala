@@ -808,7 +808,9 @@ private[ui] class TaskTableRowData(
     val shuffleRead: Option[TaskTableRowShuffleReadData],
     val shuffleWrite: Option[TaskTableRowShuffleWriteData],
     val bytesSpilled: Option[TaskTableRowBytesSpilledData],
-    val error: String)
+    val customMetrics: String,
+    val error: String
+    )
 
 private[ui] class TaskDataSource(
     tasks: Seq[TaskUIData],
@@ -964,6 +966,10 @@ private[ui] class TaskDataSource(
         None
       }
 
+    val customMetrics = metrics.map(m => m.customMetrics.foldLeft("")( (previous, pair) => {
+      (if (previous.isEmpty) "" else previous + "\n") + pair._1 + " = " + pair._2.mkString(",")
+    })).getOrElse("")
+
     new TaskTableRowData(
       info.index,
       info.taskId,
@@ -987,6 +993,7 @@ private[ui] class TaskDataSource(
       shuffleRead,
       shuffleWrite,
       bytesSpilled,
+      customMetrics,
       errorMessage.getOrElse(""))
   }
 
@@ -1270,7 +1277,7 @@ private[ui] class TaskPagedTable(
         } else {
           Nil
         }} ++
-        Seq(("Errors", ""))
+        Seq(("Custom Metrics", ""),("Errors", ""))
 
     if (!taskHeadersAndCssClasses.map(_._1).contains(sortColumn)) {
       throw new IllegalArgumentException(s"Unknown column: $sortColumn")
@@ -1357,6 +1364,7 @@ private[ui] class TaskPagedTable(
         <td>{task.bytesSpilled.get.memoryBytesSpilledReadable}</td>
         <td>{task.bytesSpilled.get.diskBytesSpilledReadable}</td>
       }}
+      <td>{task.customMetrics}</td>
       {errorMessageCell(task.error)}
     </tr>
   }

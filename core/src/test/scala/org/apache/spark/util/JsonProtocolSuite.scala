@@ -108,6 +108,13 @@ class JsonProtocolSuite extends SparkFunSuite {
     testEvent(executorMetricsUpdate, executorMetricsUpdateJsonString)
   }
 
+  test("Custom Metrics in TaskMetrics") {
+    val taskMetric = makeTaskMetrics(33333L, 44444L, 55555L, 66666L, 7, 8, hasHadoopInput = false, hasOutput = false)
+    taskMetric.setCustomMetric("Custom TaskMetric 1", 1)
+    taskMetric.setCustomMetric("Custom TaskMetric 2", 2)
+    testTaskMetrics(taskMetric)
+  }
+
   test("Dependent Classes") {
     val logUrlMap = Map("stderr" -> "mystderr", "stdout" -> "mystdout").toMap
     testRDDInfo(makeRddInfo(2, 3, 4, 5L, 6L))
@@ -552,6 +559,7 @@ class JsonProtocolSuite extends SparkFunSuite {
     assertOptionEquals(
       metrics1.inputMetrics, metrics2.inputMetrics, assertInputMetricsEquals)
     assertOptionEquals(metrics1.updatedBlocks, metrics2.updatedBlocks, assertBlocksEquals)
+    assert(metrics1.customMetrics === metrics2.customMetrics)
   }
 
   private def assertEquals(metrics1: ShuffleReadMetrics, metrics2: ShuffleReadMetrics) {
@@ -1062,7 +1070,8 @@ class JsonProtocolSuite extends SparkFunSuite {
       |          "Disk Size": 0
       |        }
       |      }
-      |    ]
+      |    ],
+      |    "Custom Metrics": []
       |  }
       |}
     """.stripMargin
@@ -1148,7 +1157,8 @@ class JsonProtocolSuite extends SparkFunSuite {
       |          "Disk Size": 0
       |        }
       |      }
-      |    ]
+      |    ],
+      |    "Custom Metrics": []
       |  }
       |}
     """
@@ -1234,7 +1244,8 @@ class JsonProtocolSuite extends SparkFunSuite {
       |          "Disk Size": 0
       |        }
       |      }
-      |    ]
+      |    ],
+      |    "Custom Metrics": []
       |  }
       |}
     """
@@ -1712,7 +1723,8 @@ class JsonProtocolSuite extends SparkFunSuite {
      |          "Disk Size": 0
      |        }
      |      }
-     |    ]
+     |    ],
+     |    "Custom Metrics": []
      |  }
      |  }]
      |}
